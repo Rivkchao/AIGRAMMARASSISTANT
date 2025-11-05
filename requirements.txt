@@ -1,7 +1,0 @@
-en_core_web_sm
-pandas==2.3.1
-scipy==1.16.1
-spacy==3.8.7
-streamlit==1.50.0
-torch==2.7.1
-transformers==4.57.1
