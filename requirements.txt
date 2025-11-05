@@ -1,0 +1,14 @@
+# Pastikan nama model Spacy dikoreksi
+en-core-web-sm
+
+# Library data/data science
+pandas==2.2.2
+scipy==1.13.1
+
+# Streamlit
+streamlit==1.50.0
+
+# Library AI/ML (TURUNKAN VERSI UNTUK MENGURANGI UKURAN)
+torch==2.2.0
+transformers==4.38.2
+spacy==3.7.4
