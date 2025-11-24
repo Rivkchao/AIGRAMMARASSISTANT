@@ -63,16 +63,26 @@ if st.button("✨ Fix & Analyze Text", use_container_width=True, type="primary")
         with col_highlight:
             st.subheader("🌈 Structure Highlight")
             st.markdown(
-                """
-                <div style="padding: 10px; border-radius: 8px; background-color: #f0f2f6; margin-bottom: 15px;">
-                    **Legend:** <span style="color:#16a34a; font-weight: bold;">🟩 Subject</span> | 
+            """
+            <div style="
+                display: flex;
+                justify-content: center;
+                border-radius: 8px;
+                background-color: #f0f2f6;
+                margin-bottom: 15px;
+                padding: 6px 0;
+            ">  
+                <div>
+                    <span style="color:#16a34a; font-weight: bold;">🟩 Subject</span> | 
                     <span style="color:#2563eb; font-weight: bold;">🟦 Verb</span> | 
                     <span style="color:#d97706; font-weight: bold;">🟨 Object</span> | 
                     <span style="color:#9333ea; font-weight: bold;">🟪 Adverbial</span>
                 </div>
-                """, unsafe_allow_html=True
-            )
-            
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+           
             highlighted_html = highlight_svoa(final, tokens)
             st.markdown(
                 f"<div style='border: 1px solid #ddd; padding: 15px; border-radius: 10px;'>{highlighted_html}</div>", 
