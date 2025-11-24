@@ -2,7 +2,7 @@ import streamlit as st
 import re
 import requests
 
-OPENROUTER_API_KEY = st.secrets("OPENAI_API_KEY")
+OPENROUTER_API_KEY = st.secrets["OPENAI_API_KEY"]
 
 def correct_grammar_openai(text):
     """
