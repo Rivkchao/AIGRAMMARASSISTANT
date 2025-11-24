@@ -1,7 +1,7 @@
-import os
+import streamlit as st
 import requests
 
-OPENROUTER_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENROUTER_API_KEY = st.secrets("OPENAI_API_KEY")
 
 def detect_tense_openai(text):
     """
