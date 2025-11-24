@@ -1,8 +1,8 @@
-import os
+import streamlit as st
 import re
 import requests
 
-OPENROUTER_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENROUTER_API_KEY = st.secrets("OPENAI_API_KEY")
 
 def correct_grammar_openai(text):
     """
@@ -16,7 +16,7 @@ Sentence: {text}
 
 Respond in JSON with two fields:
 - corrected: the corrected version
-- explanation: short explanation (in English)
+- explanation: short explanation (in Indonesian) of the changes made and give the point what are you refine.
     """
 
     headers = {
