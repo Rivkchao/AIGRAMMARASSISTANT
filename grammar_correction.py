@@ -2,7 +2,11 @@ import os
 import re
 import requests
 
+<<<<<<< HEAD
 API_KEY = os.getenv("OPENAI_API_KEY")
+=======
+OPENROUTER_API_KEY = st.secrets["OPENAI_API_KEY"]
+>>>>>>> 1222afde46f03eac938416a7f62bbb9ea7430ca7
 
 def correct_grammar_openai(text):
     """
