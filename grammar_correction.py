@@ -1,32 +1,44 @@
+import streamlit as st
 import re
+import requests
 
-def highlight_svoa(text, tokens):
-    color_map = {"S": "#4ade80", "P": "#60a5fa", "O": "#facc15", "K": "#c084fc"}
-    highlighted_text = text # Mulai dengan teks mentah
+API_KEY = st.secrets("OPENAI_API_KEY")
 
-    all_elements = []
-    
-    token_map = {"S": tokens["S"], "P": tokens["P"], "O": tokens["O"], "K": tokens["K"]} 
-    
-    for tag, phrases in token_map.items():
-        for phrase in phrases:
-            if phrase and isinstance(phrase, str):
-                all_elements.append((phrase, tag))
-                
-    all_elements.sort(key=lambda x: len(x[0].split()), reverse=True)
-    
-    for phrase, tag in all_elements:
-        html_tag = f"<span style='background-color:{color_map[tag]}; color:black; padding:3px 6px; border-radius:5px; margin:2px;'>{phrase}</span>"
-        
-        try:
-            highlighted_text = re.sub(
-                re.escape(phrase), 
-                html_tag, 
-                highlighted_text, 
-                flags=re.IGNORECASE,
-                count=1 
-            )
-        except Exception as e:
-            print(f"Error during replacement for phrase '{phrase}': {e}")
-            
-    return highlighted_text.strip()
+def correct_grammar_openai(text):
+    """
+    Uses OpenAI (via OpenRouter) to correct grammar and explain changes.
+    """
+    prompt = f"""
+You are an English grammar assistant. 
+Correct the grammar of this sentence and explain the changes briefly.
+
+Sentence: {text}
+
+Respond in JSON with two fields:
+- corrected: the corrected version
+- explanation: short explanation (in Indonesian) of the changes made.
+    """
+
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    data = {
+        "model": "gpt-4o-mini",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.2,
+    }
+
+    response = requests.post("https://openrouter.ai/api/v1/chat/completions",
+                             headers=headers, json=data)
+    result = response.json()
+    text_out = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+    corrected = re.search(r'"corrected"\s*:\s*"([^"]+)"', text_out)
+    explanation = re.search(r'"explanation"\s*:\s*"([^"]+)"', text_out)
+
+    return (
+        corrected.group(1) if corrected else text,
+        explanation.group(1) if explanation else "No explanation provided.",
+    )
