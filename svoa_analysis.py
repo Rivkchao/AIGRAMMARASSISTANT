@@ -1,11 +1,11 @@
-import os
+import streamlit as st
 import re
 import json
 from typing import Dict, List, Tuple
 import pandas as pd
 import requests
 
-API_KEY = os.getenv("OPENAI_API_KEY")
+API_KEY = st.secrets("OPENAI_API_KEY")
 
 
 def analyze_svoa(text: str) -> Tuple[pd.DataFrame, Dict[str, List[str]]]:
