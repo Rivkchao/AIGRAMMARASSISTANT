@@ -31,11 +31,24 @@ if st.button("✨ Fix & Analyze Text", use_container_width=True, type="primary")
             st.write("🪶 Applying final text refinement...")
             time.sleep(0.5)
             final = refine_text(corrected)
+            is_not_english = "Input is not an English sentence and cannot be corrected." in explanation
 
-            # Step 3: Structure Analysis
-            st.write("📊 Performing SVOA and Tense analysis...")
-            time.sleep(0.5)
-            df, tokens = analyze_svoa(final)
+           if is_not_english:
+                # Jika bukan English, lewati analisis SVOA untuk menghemat token/waktu 
+                # dan menggunakan data kosong untuk tampilan.
+                st.write("⚠️ Input bukan kalimat Bahasa Inggris. Melewatkan analisis SVOA.")
+                df = pd.DataFrame({
+                    "Sentence Structure": ["Subject (Subjek)", "Verb (Predikat)", "Object (Objek)", "Adverbial (Keterangan)", "Noun (Kata Benda)", "Pronoun (Kata Ganti)", "Tense"],
+                    "Result": ["-"] * 6 + ["Not English"] 
+                })
+                tokens = {"S": [], "P": [], "O": [], "K": []}
+                # Atur final menjadi kosong agar tidak ditampilkan sebagai teks yang 'dipoles'
+                final = "" 
+            else:
+                # Step 3: Structure Analysis (Hanya jika English)
+                st.write("📊 Performing SVOA and Tense analysis...")
+                time.sleep(0.5)
+                df, tokens = analyze_svoa(final)
             
             status.update(label="Analysis Complete!", state="complete", expanded=False)
             st.balloons() # A celebratory visual
@@ -45,13 +58,16 @@ if st.button("✨ Fix & Analyze Text", use_container_width=True, type="primary")
         
         with col_fixed_text:
             st.subheader("✅ Polished Text")
-            st.info(f"**{final}**")
+            if final:
+                st.info(f"**{final}**")
+            else:
+                st.info("*(Input bukan Kalimat Bahasa Inggris / Tidak ada teks yang diproses)*")
             
             tab_explanation, tab_svoa = st.tabs(["💬 AI Explanation", "📊 Detailed Structure Data"])
             
             with tab_explanation:
                 st.markdown("#### What the AI Changed:")
-                st.write(explanation)
+                st.write(explanation) # Explanation tetap ditampilkan.
                 st.markdown("---")
                 tense_result = df[df['Sentence Structure'] == 'Tense']['Result'].iloc[0]
                 st.metric(label="Detected Tense", value=tense_result, help="Identified by the AI model.")
@@ -59,7 +75,7 @@ if st.button("✨ Fix & Analyze Text", use_container_width=True, type="primary")
             with tab_svoa:
                 st.markdown("#### Found Grammatical Elements")
                 st.dataframe(df, use_container_width=True, hide_index=True)
-
+                
         with col_highlight:
             st.subheader("🌈 Structure Highlight")
             st.markdown(
@@ -83,9 +99,8 @@ if st.button("✨ Fix & Analyze Text", use_container_width=True, type="primary")
             unsafe_allow_html=True
         )
            
-            highlighted_html = highlight_svoa(final if final else user_text, tokens)
+           highlighted_html = highlight_svoa(final if final else user_text, tokens)
             
-            # Jika bukan English, tampilkan teks asli tanpa highlight
             if is_not_english:
                 display_text = user_text
             else:
