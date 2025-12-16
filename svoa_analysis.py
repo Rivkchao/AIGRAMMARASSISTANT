@@ -21,8 +21,7 @@ def analyze_svoa(text: str) -> Tuple[pd.DataFrame, Dict[str, List[str]]]:
         return empty_df, {"S": [], "P": [], "O": [], "K": []}
 
     unified_prompt = f"""
-    Analyze the following English sentence.
-    
+    **Analyze the following text ONLY if it is an English sentence. If the text is NOT in English (e.g., Indonesian), return the JSON with all list values as empty and 'Tense' as 'Not English'.**
     1. Extract the Subject (S), Verb (P, Predicate), Object (O), and Adverbial (K, Keterangan).
     2. Extract all Nouns and Pronouns.
     3. Identify the Tense of the sentence.
