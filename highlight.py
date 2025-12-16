@@ -1,46 +1,82 @@
 import re
 
 def highlight_svoa(text, tokens):
-    # Mapping warna untuk SVOA
     color_map = {"S": "#4ade80", "P": "#60a5fa", "O": "#facc15", "K": "#c084fc"}
-    highlighted_text = text # Mulai dengan teks mentah (clean text)
+    highlighted_text = text 
 
-    all_elements = []
-    
     token_map = {"S": tokens["S"], "P": tokens["P"], "O": tokens["O"], "K": tokens["K"]}  
     
-    # 1. Kumpulkan semua phrase dan tag-nya
+    # --- 1. Penyesuaian Subjek Kontraksi (I'm, You're, dll.) ---
+    
+    adjusted_subjects = []
+    
+    for subject_phrase in token_map["S"]:
+        # Hanya fokus pada pronoun tunggal yang merupakan subjek umum
+        if subject_phrase.lower() in ['i', 'you', 'he', 'she', 'it', 'we', 'they']:
+            
+            # Pola untuk mencari Subject pronoun diikuti kontraksi ('m, 're, 've, 'd, 'll) di teks asli
+            # Contoh: \bi['](m|re|ve|d|ll)\b
+            # Kita menggunakan re.escape untuk menangani karakter khusus di subject_phrase
+            contraction_pattern = r'\b' + re.escape(subject_phrase) + r"['](m|re|ve|d|ll)\b"
+            
+            match = re.search(contraction_pattern, text, flags=re.IGNORECASE)
+            
+            if match:
+                # Jika kontraksi ditemukan (misalnya I'm), gunakan bentuk kontraksi penuh
+                full_contraction = match.group(0) # Contoh: "i'm"
+                adjusted_subjects.append(full_contraction)
+                
+                # Hapus fragmen Predicate (misalnya 'm) dari list P, karena sudah termasuk di S
+                fragment_p = match.group(2) # Group 2 berisi 'm', 're', 've', dll.
+                if fragment_p in token_map["P"]:
+                    try:
+                        token_map["P"].remove(fragment_p)
+                    except ValueError:
+                        # Fragment P mungkin sudah dihapus jika ada duplikasi
+                        pass
+                
+            else:
+                # Jika tidak ada kontraksi, gunakan phrase asli ("I")
+                adjusted_subjects.append(subject_phrase)
+        else:
+            # Jika bukan pronoun, gunakan phrase asli
+            adjusted_subjects.append(subject_phrase)
+
+    # Ganti list Subject di token_map dengan yang sudah disesuaikan
+    token_map["S"] = adjusted_subjects
+    # ----------------------------------------------------
+    
+    # --- 2. Kumpulkan semua elemen ---
+    all_elements = []
+    
+    # Gunakan set untuk melacak phrase yang sudah ditambahkan untuk menghindari duplikasi
+    unique_phrases = set() 
+    
     for tag, phrases in token_map.items():
         for phrase in phrases:
-            # Pastikan phrase adalah string non-kosong dan bersih
             if phrase and isinstance(phrase, str):
-                # Kita strip whitespace di sini
-                all_elements.append((phrase.strip(), tag))
+                stripped_phrase = phrase.strip()
+                # Hindari menambahkan phrase yang sama untuk tag berbeda (misal 'am' di S dan P)
+                if stripped_phrase not in unique_phrases:
+                    all_elements.append((stripped_phrase, tag))
+                    unique_phrases.add(stripped_phrase)
                 
-    # 2. Urutkan dari phrase terpanjang ke terpendek. Ini KRITIS.
+    # 3. Urutkan dari phrase terpanjang ke terpendek. KRITIS untuk highlight yang benar.
     all_elements.sort(key=lambda x: len(x[0].split()), reverse=True)
     
-    # Set untuk melacak kata/frase yang sudah berhasil di-highlight
-    highlighted_phrases = set()
-
+    
+    # --- 4. Lakukan Penggantian HTML ---
     for phrase, tag in all_elements:
         
-        # Cek duplikasi, meskipun pengurutan sudah membantu
-        if phrase in highlighted_phrases:
-            continue
-        
-        # Buat tag HTML untuk phrase ini
+        # Buat tag HTML
         html_tag = f"<span style='background-color:{color_map[tag]}; color:black; padding:3px 6px; border-radius:5px; margin:2px;'>{phrase}</span>"
         
-        # Strategi Penggantian:
-        # Kita harus mencari phrase yang *belum* di-highlight di dalam highlighted_text.
-        
-        # Coba Strategi 1: Menggunakan Word Boundary (\b). Paling akurat, tapi gagal pada apostrof (i'm, king's).
+        # Strategi: Coba dengan word boundary, lalu fallback tanpa word boundary jika gagal
+
+        # Strategi 1: Coba dengan word boundary (\b). Paling aman.
         try:
-            # Escape phrase, lalu tambahkan boundary
             pattern_boundary = r'\b' + re.escape(phrase) + r'\b'
             
-            # Cek apakah pola ini cocok di teks saat ini
             if re.search(pattern_boundary, highlighted_text, flags=re.IGNORECASE):
                 highlighted_text = re.sub(
                     pattern_boundary, 
@@ -49,15 +85,12 @@ def highlight_svoa(text, tokens):
                     flags=re.IGNORECASE,
                     count=1 
                 )
-                highlighted_phrases.add(phrase)
                 continue # Lanjut ke phrase berikutnya
                 
-        except Exception as e:
-             # Jika terjadi error pada regex, coba fallback
-             pass
+        except Exception:
+             pass # Lanjut ke strategi fallback
         
-        # Strategi 2: Fallback (Tanpa Word Boundary, lebih berisiko tapi menangani apostrof)
-        # Gunakan hanya re.escape(). Ini menggantikan phrase di mana pun ia ditemukan.
+        # Strategi 2: Fallback (Tanpa Word Boundary). Diperlukan untuk frase dengan apostrof/tanda baca.
         try:
             pattern_no_boundary = re.escape(phrase)
             
@@ -69,10 +102,9 @@ def highlight_svoa(text, tokens):
                     flags=re.IGNORECASE,
                     count=1 
                 )
-                highlighted_phrases.add(phrase)
 
-        except Exception as e_inner:
-            # Jika semua gagal, log error (optional)
-            print(f"Error final replacement for phrase '{phrase}': {e_inner}")
+        except Exception as e:
+            # Ini hanya untuk logging, tidak akan mempengaruhi output utama
+            print(f"Error final replacement for phrase '{phrase}': {e}")
 
     return highlighted_text.strip()
