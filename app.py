@@ -99,7 +99,7 @@ if st.button("✨ Fix & Analyze Text", use_container_width=True, type="primary")
             unsafe_allow_html=True
         )
            
-           highlighted_html = highlight_svoa(final if final else user_text, tokens)
+            highlighted_html = highlight_svoa(final if final else user_text, tokens)
             
             if is_not_english:
                 display_text = user_text
