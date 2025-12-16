@@ -16,7 +16,7 @@ def analyze_svoa(text: str) -> Tuple[pd.DataFrame, Dict[str, List[str]]]:
     if not API_KEY:
         empty_df = pd.DataFrame({
             "Sentence Structure": ["Subject", "Verb", "Object", "Adverbial", "Noun", "Pronoun", "Tense"],
-            "Result": ["API Key Missing"] * 7
+            "Result": ["API Key is Missing"] * 7
         })
         return empty_df, {"S": [], "P": [], "O": [], "K": []}
 
