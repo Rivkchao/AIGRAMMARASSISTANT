@@ -4,6 +4,7 @@ from text_refinement import refine_text
 from svoa_analysis import analyze_svoa
 from highlight import highlight_svoa
 import time  
+import pandas as pd
 
 st.set_page_config(
     page_title="AI Grammar Assistant", 
