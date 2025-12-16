@@ -9,7 +9,7 @@ def correct_grammar_openai(text):
     Uses OpenAI (via OpenRouter) to correct grammar and explain changes.
     """
     prompt = f"""
-You are an English grammar assistant. 
+You are an expert English grammar assistant. **ONLY process and correct the grammar of English sentences. If the input sentence is not English, return the original sentence in 'corrected' and an explanation 'Input is not an English sentence and cannot be corrected.'**
 Correct the grammar of this sentence and explain the changes briefly.
 
 Sentence: {text}
