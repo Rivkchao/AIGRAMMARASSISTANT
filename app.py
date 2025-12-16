@@ -44,7 +44,7 @@ if st.button("✨ Fix & Analyze Text", use_container_width=True, type="primary")
                 tokens = {"S": [], "P": [], "O": [], "K": []}
                 # Atur final menjadi kosong agar tidak ditampilkan sebagai teks yang 'dipoles'
                 final = "" 
-             else:
+            else:
                 # Step 3: Structure Analysis (Hanya jika English)
                 st.write("📊 Performing SVOA and Tense analysis...")
                 time.sleep(0.5)
