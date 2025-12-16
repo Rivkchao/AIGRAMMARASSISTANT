@@ -9,52 +9,69 @@ def highlight_svoa(text, tokens):
     # --- 1. Penyesuaian Subjek Kontraksi (I'm, You're, dll.) ---
     
     adjusted_subjects = []
+adjusted_predicates = []
     
-    for subject_phrase in token_map["S"]:
-        # Hanya fokus pada pronoun tunggal yang merupakan subjek umum
-        if subject_phrase.lower() in ['i', 'you', 'he', 'she', 'it', 'we', 'they']:
+# Kumpulkan semua Subjek
+for subject_phrase in token_map["S"]:
+    
+    is_contracted = False
+    
+    # 1A. Fokus pada pronoun tunggal yang umum dikontraksi
+    if subject_phrase.lower() in ['i', 'you', 'he', 'she', 'it', 'we', 'they']:
+        
+        # Pola untuk mencari Subject pronoun diikuti kontraksi ('m, 're, 've, 'd, 'll)
+        contraction_pattern = r'\b' + re.escape(subject_phrase) + r"['](m|re|ve|d|ll)\b"
+        
+        match = re.search(contraction_pattern, text, flags=re.IGNORECASE)
+        
+        if match:
+            # Jika kontraksi ditemukan (misalnya I'm), gunakan bentuk kontraksi penuh
+            full_contraction = match.group(0) # Contoh: "i'm"
             
-            # Pola untuk mencari Subject pronoun diikuti kontraksi ('m, 're, 've, 'd, 'll) di teks asli
-            # Group 1: (m|re|ve|d|ll)
-            contraction_pattern = r'\b' + re.escape(subject_phrase) + r"['](m|re|ve|d|ll)\b"
+            # Cek apakah ada negasi 'not' segera setelah kontraksi (I'm not)
+            negation_pattern = re.escape(full_contraction) + r'\s+not\b'
+            negation_match = re.search(negation_pattern, text, flags=re.IGNORECASE)
             
-            match = re.search(contraction_pattern, text, flags=re.IGNORECASE)
-            
-            if match:
-                # Jika kontraksi ditemukan (misalnya I'm), gunakan bentuk kontraksi penuh
-                full_contraction = match.group(0) # Contoh: "i'm"
+            if negation_match:
+                # Jika ada negasi, gabungkan menjadi Subjek/Predicate + Not (I'm not)
+                full_phrase = negation_match.group(0) # Contoh: "I'm not"
+                adjusted_subjects.append(full_phrase.strip())
+                is_contracted = True
+                
+                # Hapus 'not' dari Adverbial jika ada
+                if 'not' in token_map["K"]:
+                    try: token_map["K"].remove('not')
+                    except ValueError: pass
+                
+            else:
+                # Jika hanya kontraksi (I'm), masukkan ke S
                 adjusted_subjects.append(full_contraction)
+                is_contracted = True
+            
+            # Hapus fragmen P yang dikontraksi dari list P
+            if is_contracted:
+                fragment_p = match.group(1) 
                 
-                # Mendapatkan fragmen P yang dikontraksi (misalnya 'm)
-                fragment_p = match.group(1) # <-- PERBAIKAN: Menggunakan Group 1
-                
-                # Hapus fragmen P dan bentuk lengkapnya dari list P (Predicate)
-                
-                # 1. Coba hapus fragmen pendek yang dikontraksi ('m, 're, dll.)
-                try:
-                    if fragment_p in token_map["P"]:
-                        token_map["P"].remove(fragment_p)
-                except ValueError:
-                    pass
+                # Coba hapus fragmen pendek ('m)
+                if fragment_p in token_map["P"]:
+                    try: token_map["P"].remove(fragment_p)
+                    except ValueError: pass
 
-                # 2. Coba hapus bentuk kata kerja penuh yang sesuai (am, are, have, would/had, will/shall)
+                # Coba hapus bentuk kata kerja penuh (am/are/have/etc.)
                 if fragment_p == 'm' and 'am' in token_map["P"]:
                     try: token_map["P"].remove('am')
                     except ValueError: pass
                 elif fragment_p == 're' and 'are' in token_map["P"]:
                     try: token_map["P"].remove('are')
                     except ValueError: pass
-                # Anda bisa menambahkan logika tambahan untuk 've, 'd, 'll jika diperlukan
+                # Tambahkan logika untuk 've, 'd, 'll jika perlu.
                 
-            else:
-                # Jika tidak ada kontraksi, gunakan phrase asli ("I")
-                adjusted_subjects.append(subject_phrase)
-        else:
-            # Jika bukan pronoun, gunakan phrase asli
-            adjusted_subjects.append(subject_phrase)
+    if not is_contracted:
+        # Jika tidak ada kontraksi, gunakan phrase asli
+        adjusted_subjects.append(subject_phrase)
 
     # Ganti list Subject di token_map dengan yang sudah disesuaikan
-    token_map["S"] = adjusted_subjects
+    token_map["S"] = adjusted_subjects    
     # ----------------------------------------------------
     
     # --- 2. Kumpulkan semua elemen ---
