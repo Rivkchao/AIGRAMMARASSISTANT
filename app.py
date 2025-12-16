@@ -103,12 +103,12 @@ if st.button("✨ Fix & Analyze Text", use_container_width=True, type="primary")
             highlighted_html = highlight_svoa(final if final else user_text, tokens)
             
             if is_not_english:
-                display_text = user_text
+                display_text = 'Your text is not in English'
             else:
                 display_text = highlighted_html
 
             st.markdown(
-                f"<div style='border: 1px solid #ddd; padding: 15px; border-radius: 10px;'>{display_text}</div>", 
+                f"<div style='border: 1px solid #ddd; padding: 15px; border-radius: 10px; font-style: italic;'>{display_text}</div>", 
                 unsafe_allow_html=True
             )
         
