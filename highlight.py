@@ -9,69 +9,69 @@ def highlight_svoa(text, tokens):
     # --- 1. Penyesuaian Subjek Kontraksi (I'm, You're, dll.) ---
     
     adjusted_subjects = []
-adjusted_predicates = []
-    
-# Kumpulkan semua Subjek
-for subject_phrase in token_map["S"]:
-    
-    is_contracted = False
-    
-    # 1A. Fokus pada pronoun tunggal yang umum dikontraksi
-    if subject_phrase.lower() in ['i', 'you', 'he', 'she', 'it', 'we', 'they']:
+    adjusted_predicates = []
         
-        # Pola untuk mencari Subject pronoun diikuti kontraksi ('m, 're, 've, 'd, 'll)
-        contraction_pattern = r'\b' + re.escape(subject_phrase) + r"['](m|re|ve|d|ll)\b"
+    # Kumpulkan semua Subjek
+    for subject_phrase in token_map["S"]:
         
-        match = re.search(contraction_pattern, text, flags=re.IGNORECASE)
+        is_contracted = False
         
-        if match:
-            # Jika kontraksi ditemukan (misalnya I'm), gunakan bentuk kontraksi penuh
-            full_contraction = match.group(0) # Contoh: "i'm"
+        # 1A. Fokus pada pronoun tunggal yang umum dikontraksi
+        if subject_phrase.lower() in ['i', 'you', 'he', 'she', 'it', 'we', 'they']:
             
-            # Cek apakah ada negasi 'not' segera setelah kontraksi (I'm not)
-            negation_pattern = re.escape(full_contraction) + r'\s+not\b'
-            negation_match = re.search(negation_pattern, text, flags=re.IGNORECASE)
+            # Pola untuk mencari Subject pronoun diikuti kontraksi ('m, 're, 've, 'd, 'll)
+            contraction_pattern = r'\b' + re.escape(subject_phrase) + r"['](m|re|ve|d|ll)\b"
             
-            if negation_match:
-                # Jika ada negasi, gabungkan menjadi Subjek/Predicate + Not (I'm not)
-                full_phrase = negation_match.group(0) # Contoh: "I'm not"
-                adjusted_subjects.append(full_phrase.strip())
-                is_contracted = True
-                
-                # Hapus 'not' dari Adverbial jika ada
-                if 'not' in token_map["K"]:
-                    try: token_map["K"].remove('not')
-                    except ValueError: pass
-                
-            else:
-                # Jika hanya kontraksi (I'm), masukkan ke S
-                adjusted_subjects.append(full_contraction)
-                is_contracted = True
+            match = re.search(contraction_pattern, text, flags=re.IGNORECASE)
             
-            # Hapus fragmen P yang dikontraksi dari list P
-            if is_contracted:
-                fragment_p = match.group(1) 
+            if match:
+                # Jika kontraksi ditemukan (misalnya I'm), gunakan bentuk kontraksi penuh
+                full_contraction = match.group(0) # Contoh: "i'm"
                 
-                # Coba hapus fragmen pendek ('m)
-                if fragment_p in token_map["P"]:
-                    try: token_map["P"].remove(fragment_p)
-                    except ValueError: pass
-
-                # Coba hapus bentuk kata kerja penuh (am/are/have/etc.)
-                if fragment_p == 'm' and 'am' in token_map["P"]:
-                    try: token_map["P"].remove('am')
-                    except ValueError: pass
-                elif fragment_p == 're' and 'are' in token_map["P"]:
-                    try: token_map["P"].remove('are')
-                    except ValueError: pass
-                # Tambahkan logika untuk 've, 'd, 'll jika perlu.
+                # Cek apakah ada negasi 'not' segera setelah kontraksi (I'm not)
+                negation_pattern = re.escape(full_contraction) + r'\s+not\b'
+                negation_match = re.search(negation_pattern, text, flags=re.IGNORECASE)
                 
-    if not is_contracted:
-        # Jika tidak ada kontraksi, gunakan phrase asli
-        adjusted_subjects.append(subject_phrase)
-
-    # Ganti list Subject di token_map dengan yang sudah disesuaikan
-    token_map["S"] = adjusted_subjects    
+                if negation_match:
+                    # Jika ada negasi, gabungkan menjadi Subjek/Predicate + Not (I'm not)
+                    full_phrase = negation_match.group(0) # Contoh: "I'm not"
+                    adjusted_subjects.append(full_phrase.strip())
+                    is_contracted = True
+                    
+                    # Hapus 'not' dari Adverbial jika ada
+                    if 'not' in token_map["K"]:
+                        try: token_map["K"].remove('not')
+                        except ValueError: pass
+                    
+                else:
+                    # Jika hanya kontraksi (I'm), masukkan ke S
+                    adjusted_subjects.append(full_contraction)
+                    is_contracted = True
+                
+                # Hapus fragmen P yang dikontraksi dari list P
+                if is_contracted:
+                    fragment_p = match.group(1) 
+                    
+                    # Coba hapus fragmen pendek ('m)
+                    if fragment_p in token_map["P"]:
+                        try: token_map["P"].remove(fragment_p)
+                        except ValueError: pass
+    
+                    # Coba hapus bentuk kata kerja penuh (am/are/have/etc.)
+                    if fragment_p == 'm' and 'am' in token_map["P"]:
+                        try: token_map["P"].remove('am')
+                        except ValueError: pass
+                    elif fragment_p == 're' and 'are' in token_map["P"]:
+                        try: token_map["P"].remove('are')
+                        except ValueError: pass
+                    # Tambahkan logika untuk 've, 'd, 'll jika perlu.
+                    
+        if not is_contracted:
+            # Jika tidak ada kontraksi, gunakan phrase asli
+            adjusted_subjects.append(subject_phrase)
+    
+        # Ganti list Subject di token_map dengan yang sudah disesuaikan
+        token_map["S"] = adjusted_subjects    
     # ----------------------------------------------------
     
     # --- 2. Kumpulkan semua elemen ---
