@@ -83,9 +83,16 @@ if st.button("✨ Fix & Analyze Text", use_container_width=True, type="primary")
             unsafe_allow_html=True
         )
            
-            highlighted_html = highlight_svoa(final, tokens)
+            highlighted_html = highlight_svoa(final if final else user_text, tokens)
+            
+            # Jika bukan English, tampilkan teks asli tanpa highlight
+            if is_not_english:
+                display_text = user_text
+            else:
+                display_text = highlighted_html
+
             st.markdown(
-                f"<div style='border: 1px solid #ddd; padding: 15px; border-radius: 10px;'>{highlighted_html}</div>", 
+                f"<div style='border: 1px solid #ddd; padding: 15px; border-radius: 10px;'>{display_text}</div>", 
                 unsafe_allow_html=True
             )
         
