@@ -15,8 +15,7 @@ def highlight_svoa(text, tokens):
         if subject_phrase.lower() in ['i', 'you', 'he', 'she', 'it', 'we', 'they']:
             
             # Pola untuk mencari Subject pronoun diikuti kontraksi ('m, 're, 've, 'd, 'll) di teks asli
-            # Contoh: \bi['](m|re|ve|d|ll)\b
-            # Kita menggunakan re.escape untuk menangani karakter khusus di subject_phrase
+            # Group 1: (m|re|ve|d|ll)
             contraction_pattern = r'\b' + re.escape(subject_phrase) + r"['](m|re|ve|d|ll)\b"
             
             match = re.search(contraction_pattern, text, flags=re.IGNORECASE)
@@ -26,14 +25,26 @@ def highlight_svoa(text, tokens):
                 full_contraction = match.group(0) # Contoh: "i'm"
                 adjusted_subjects.append(full_contraction)
                 
-                # Hapus fragmen Predicate (misalnya 'm) dari list P, karena sudah termasuk di S
-                fragment_p = match.group(2) # Group 2 berisi 'm', 're', 've', dll.
-                if fragment_p in token_map["P"]:
-                    try:
+                # Mendapatkan fragmen P yang dikontraksi (misalnya 'm)
+                fragment_p = match.group(1) # <-- PERBAIKAN: Menggunakan Group 1
+                
+                # Hapus fragmen P dan bentuk lengkapnya dari list P (Predicate)
+                
+                # 1. Coba hapus fragmen pendek yang dikontraksi ('m, 're, dll.)
+                try:
+                    if fragment_p in token_map["P"]:
                         token_map["P"].remove(fragment_p)
-                    except ValueError:
-                        # Fragment P mungkin sudah dihapus jika ada duplikasi
-                        pass
+                except ValueError:
+                    pass
+
+                # 2. Coba hapus bentuk kata kerja penuh yang sesuai (am, are, have, would/had, will/shall)
+                if fragment_p == 'm' and 'am' in token_map["P"]:
+                    try: token_map["P"].remove('am')
+                    except ValueError: pass
+                elif fragment_p == 're' and 'are' in token_map["P"]:
+                    try: token_map["P"].remove('are')
+                    except ValueError: pass
+                # Anda bisa menambahkan logika tambahan untuk 've, 'd, 'll jika diperlukan
                 
             else:
                 # Jika tidak ada kontraksi, gunakan phrase asli ("I")
@@ -49,14 +60,12 @@ def highlight_svoa(text, tokens):
     # --- 2. Kumpulkan semua elemen ---
     all_elements = []
     
-    # Gunakan set untuk melacak phrase yang sudah ditambahkan untuk menghindari duplikasi
     unique_phrases = set() 
     
     for tag, phrases in token_map.items():
         for phrase in phrases:
             if phrase and isinstance(phrase, str):
                 stripped_phrase = phrase.strip()
-                # Hindari menambahkan phrase yang sama untuk tag berbeda (misal 'am' di S dan P)
                 if stripped_phrase not in unique_phrases:
                     all_elements.append((stripped_phrase, tag))
                     unique_phrases.add(stripped_phrase)
@@ -68,11 +77,8 @@ def highlight_svoa(text, tokens):
     # --- 4. Lakukan Penggantian HTML ---
     for phrase, tag in all_elements:
         
-        # Buat tag HTML
         html_tag = f"<span style='background-color:{color_map[tag]}; color:black; padding:3px 6px; border-radius:5px; margin:2px;'>{phrase}</span>"
         
-        # Strategi: Coba dengan word boundary, lalu fallback tanpa word boundary jika gagal
-
         # Strategi 1: Coba dengan word boundary (\b). Paling aman.
         try:
             pattern_boundary = r'\b' + re.escape(phrase) + r'\b'
@@ -85,10 +91,10 @@ def highlight_svoa(text, tokens):
                     flags=re.IGNORECASE,
                     count=1 
                 )
-                continue # Lanjut ke phrase berikutnya
+                continue
                 
         except Exception:
-             pass # Lanjut ke strategi fallback
+             pass
         
         # Strategi 2: Fallback (Tanpa Word Boundary). Diperlukan untuk frase dengan apostrof/tanda baca.
         try:
@@ -104,7 +110,6 @@ def highlight_svoa(text, tokens):
                 )
 
         except Exception as e:
-            # Ini hanya untuk logging, tidak akan mempengaruhi output utama
             print(f"Error final replacement for phrase '{phrase}': {e}")
 
     return highlighted_text.strip()
